@@ -91,7 +91,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--inputdir",
         type=str,
-        default="examples/kunkun.webp",
+        default="examples/",
         help="dir for input image",
     )
     parser.add_argument(
@@ -118,11 +118,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
 
-    img = Image.open(args.inputdir)
-    img = preprocess_image(img, args.bg_choice, 1.0, (127, 127, 127))
-    os.makedirs(args.outdir, exist_ok=True)
-    img.save(args.outdir+"preprocessed_image.png")
-
+    # Load Model 
     crm_path = hf_hub_download(repo_id="Zhengyi/CRM", filename="CRM.pth")
     specs = json.load(open("configs/specs_objaverse_total.json"))
     model = CRM(specs).to("cuda")
@@ -148,13 +144,28 @@ if __name__ == "__main__":
         stage2_sampler_config,
     )
 
-    rt_dict = pipeline(img, scale=args.scale, step=args.step)
-    stage1_images = rt_dict["stage1_images"]
-    stage2_images = rt_dict["stage2_images"]
-    np_imgs = np.concatenate(stage1_images, 1)
-    np_xyzs = np.concatenate(stage2_images, 1)
-    Image.fromarray(np_imgs).save(args.outdir+"pixel_images.png")
-    Image.fromarray(np_xyzs).save(args.outdir+"xyz_images.png")
+    # go through each image in inputdir
+    os.makedirs(args.outdir, exist_ok=True)
+    img_list = os.listdir(args.inputdir)
+    
+    for input_img in img_list:
+        # create subdirectory for each image
+        img_name = input_img.split(".")[0]
+        img_path = os.path.join(args.inputdir, input_img)
+        output_dir = os.path.join(args.outdir, img_name)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        img = Image.open(img_path)
+        img = preprocess_image(img, args.bg_choice, 1.0, (127, 127, 127))
+        img.save(os.path.join(output_dir, "input.png"))
+        
+        rt_dict = pipeline(img, scale=args.scale, step=args.step)
+        stage1_images = rt_dict["stage1_images"]
+        stage2_images = rt_dict["stage2_images"]
+        np_imgs = np.concatenate(stage1_images, 1)
+        np_xyzs = np.concatenate(stage2_images, 1)
+        Image.fromarray(np_imgs).save(os.path.join(output_dir, "pixel_images.png"))
+        Image.fromarray(np_xyzs).save(os.path.join(output_dir, "xyz_images.png"))
 
-    glb_path, obj_path = generate3d(model, np_imgs, np_xyzs, "cuda")
-    shutil.copy(obj_path, args.outdir+"output3d.zip")
+        glb_path, obj_path = generate3d(model, np_imgs, np_xyzs, "cuda")
+        shutil.copy(obj_path, os.path.join(output_dir,"output3d.zip"))
