@@ -148,24 +148,33 @@ if __name__ == "__main__":
     os.makedirs(args.outdir, exist_ok=True)
     img_list = os.listdir(args.inputdir)
     
+    input_image_dir = os.path.join(args.outdir, 'input_images')
+    pixel_image_dir = os.path.join(args.outdir, 'pixel_images')
+    xyz_image_dir = os.path.join(args.outdir, 'xyz_images')
+    meshes_dir = os.path.join(args.outdir,'meshes')
+    os.makedirs(input_image_dir,exist_ok=True)
+    os.makedirs(pixel_image_dir, exist_ok=True)
+    os.makedirs(xyz_image_dir,exist_ok=True)
+    os.makedirs(meshes_dir,exist_ok=True)
+    
     for input_img in img_list:
         # create subdirectory for each image
-        img_name = input_img.split(".")[0]
+        img_name = input_img.split('.')[0]
         img_path = os.path.join(args.inputdir, input_img)
-        output_dir = os.path.join(args.outdir, img_name)
-        os.makedirs(output_dir, exist_ok=True)
         
         img = Image.open(img_path)
         img = preprocess_image(img, args.bg_choice, 1.0, (127, 127, 127))
-        img.save(os.path.join(output_dir, "input.png"))
+        img.save(os.path.join(input_image_dir, input_img))
         
         rt_dict = pipeline(img, scale=args.scale, step=args.step)
         stage1_images = rt_dict["stage1_images"]
         stage2_images = rt_dict["stage2_images"]
         np_imgs = np.concatenate(stage1_images, 1)
         np_xyzs = np.concatenate(stage2_images, 1)
-        Image.fromarray(np_imgs).save(os.path.join(output_dir, "pixel_images.png"))
-        Image.fromarray(np_xyzs).save(os.path.join(output_dir, "xyz_images.png"))
+        Image.fromarray(np_imgs).save(os.path.join(pixel_image_dir, input_img))
+        Image.fromarray(np_xyzs).save(os.path.join(xyz_image_dir, input_img))
+        
 
-        glb_path, obj_path = generate3d(model, np_imgs, np_xyzs, "cuda")
-        shutil.copy(obj_path, os.path.join(output_dir,"output3d.zip"))
+        glb_path, obj_path = generate3d(model, np_imgs, np_xyzs, "cuda",img_name)
+        shutil.copy(obj_path, os.path.join(meshes_dir, img_name + '.zip'))
+        # shutil.copy(glb_path, os.path.join(mesh_dir, ))

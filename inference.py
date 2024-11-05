@@ -6,7 +6,7 @@ from util.utils import get_tri
 import tempfile
 from mesh import Mesh
 import zipfile
-def generate3d(model, rgb, ccm, device):
+def generate3d(model, rgb, ccm, device,filename):
 
     color_tri = torch.from_numpy(rgb)/255
     xyz_tri = torch.from_numpy(ccm[:,:,(2,1,0)])/255
@@ -81,9 +81,9 @@ def generate3d(model, rgb, ccm, device):
         # mesh_obj2.export(mesh_path_obj2+".obj")
 
         with zipfile.ZipFile(mesh_path_obj+'.zip', 'w') as myzip:
-            myzip.write(mesh_path_obj+'.obj', mesh_path_obj.split("/")[-1]+'.obj')
-            myzip.write(mesh_path_obj+'.png', mesh_path_obj.split("/")[-1]+'.png')
-            myzip.write(mesh_path_obj+'.mtl', mesh_path_obj.split("/")[-1]+'.mtl')
+            myzip.write(mesh_path_obj+'.obj', filename +'.obj')
+            myzip.write(mesh_path_obj+'.png', filename +'.png')
+            myzip.write(mesh_path_obj+'.mtl', filename +'.mtl')
 
     end_time = time.time()
     elapsed_time = end_time - start_time
