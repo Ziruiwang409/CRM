@@ -6,7 +6,7 @@ from util.utils import get_tri
 import tempfile
 from mesh import Mesh
 import zipfile
-def generate3d(model, rgb, ccm, device,filename):
+def generate3d(model, rgb, ccm, device,filename, meshes_dir):
 
     color_tri = torch.from_numpy(rgb)/255
     xyz_tri = torch.from_numpy(ccm[:,:,(2,1,0)])/255
@@ -69,23 +69,22 @@ def generate3d(model, rgb, ccm, device,filename):
 
     start_time = time.time()
     with torch.no_grad():
-        mesh_path_obj = tempfile.NamedTemporaryFile(suffix=f"", delete=False).name
-        model.export_mesh_wt_uv(glctx, data_config, mesh_path_obj, "", device, res=(1024,1024), tri_fea_2=triplane_feature2)
+        mesh_path= f'{meshes_dir}/{filename}'
+        model.export_mesh_wt_uv(glctx, data_config, mesh_path, "", device, res=(1024,1024), tri_fea_2=triplane_feature2)
 
-        mesh = Mesh.load(mesh_path_obj+".obj", bound=0.9, front_dir="+z")
-        mesh_path_glb = tempfile.NamedTemporaryFile(suffix=f"", delete=False).name
-        mesh.write(mesh_path_glb+".glb")
+        mesh = Mesh.load(mesh_path+".obj", bound=0.9, front_dir="+z")
+        mesh.write(mesh_path+".glb")
 
         # mesh_obj2 = trimesh.load(mesh_path_glb+".glb", file_type='glb')
         # mesh_path_obj2 = tempfile.NamedTemporaryFile(suffix=f"", delete=False).name
         # mesh_obj2.export(mesh_path_obj2+".obj")
 
-        with zipfile.ZipFile(mesh_path_obj+'.zip', 'w') as myzip:
-            myzip.write(mesh_path_obj+'.obj', filename +'.obj')
-            myzip.write(mesh_path_obj+'.png', filename +'.png')
-            myzip.write(mesh_path_obj+'.mtl', filename +'.mtl')
+        # with zipfile.ZipFile(mesh_path_obj+'.zip', 'w') as myzip:
+        #     myzip.write(mesh_path_obj+'.obj', filename +'.obj')
+        #     myzip.write(mesh_path_obj+'.png', filename +'.png')
+        #     myzip.write(mesh_path_obj+'.mtl', filename +'.mtl')
 
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"uv takes {elapsed_time}s")
-    return mesh_path_glb+".glb", mesh_path_obj+'.zip'
+    # return mesh_path_glb+".glb", mesh_path_obj+'.zip'
