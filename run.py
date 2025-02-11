@@ -175,6 +175,6 @@ if __name__ == "__main__":
         Image.fromarray(np_xyzs).save(os.path.join(xyz_image_dir, input_img))
         
 
-        glb_path, obj_path = generate3d(model, np_imgs, np_xyzs, "cuda",img_name)
-        shutil.copy(obj_path, os.path.join(meshes_dir, img_name + '.zip'))
+        generate3d(model, np_imgs, np_xyzs, "cuda",img_name, meshes_dir)
+        # shutil.copy(obj_path, os.path.join(meshes_dir, img_name + '.zip'))
         # shutil.copy(glb_path, os.path.join(mesh_dir, ))
